@@ -1,5 +1,5 @@
 ---
-typora-copy-images-to: img\00
+typora-copy-images-to: init\01
 ---
 
 # README
@@ -13,6 +13,7 @@ typora-copy-images-to: img\00
 ## ★目录
 
 - [FAQ](./FAQ.md)
-- [01-代码编辑器与高效能编程](./01-代码编辑器与高效能编程.md)
-- [02-学编辑器-到底应该学什么](./02-学编辑器-到底应该学什么.md)
+- [00-代码编辑器与高效能编程](./00-代码编辑器与高效能编程.md)
+- [01-学编辑器-到底应该学什么](./01-学编辑器-到底应该学什么.md)
+- [02-VSCode的Why-How-What](./02-VSCode的Why-How-What.md)
 
