@@ -250,7 +250,7 @@ VSCode 还没有支持宏
 
 **➹：**[「黄金圆环法则」与「道」 « 悟道集](http://tao.logdown.com/posts/177119-golden-ring-law-and-morality)
 
-**➹：**[译言网 | [TED演讲]西蒙·斯涅克：伟大的领导者如何激励行动](https://web.archive.org/web/20160217235710/http://article.yeeyan.org/view/146334/104878)
+**➹：**[译言网 - [TED演讲]西蒙·斯涅克：伟大的领导者如何激励行动](https://web.archive.org/web/20160217235710/http://article.yeeyan.org/view/146334/104878)
 
 **➹：**[马云：伟大的领导者是如何激励行动的？ - 知乎](https://zhuanlan.zhihu.com/p/42902526)
 
