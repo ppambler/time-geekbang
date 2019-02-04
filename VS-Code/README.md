@@ -16,4 +16,5 @@ typora-copy-images-to: init\01
 - [00-代码编辑器与高效能编程](./00-代码编辑器与高效能编程.md)
 - [01-学编辑器-到底应该学什么](./01-学编辑器-到底应该学什么.md)
 - [02-VSCode的Why-How-What](./02-VSCode的Why-How-What.md)
+- [03-如何快速上手VSCode](./03-如何快速上手VSCode.md)
 
