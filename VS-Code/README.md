@@ -18,4 +18,5 @@ typora-copy-images-to: init\01
 - [02-VSCode的Why-How-What](./02-VSCode的Why-How-What.md)
 - [03-如何快速上手VSCode](./03-如何快速上手VSCode.md)
 - [04-如何做到双手不离键盘？](./04-如何做到双手不离键盘.md)
+- [05-快捷键进阶攻略](./05-快捷键进阶攻略.md)
 
