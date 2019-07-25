@@ -60,3 +60,41 @@ function createDiv() {
     document.body.appendChild(div);
 }
 document.body.appendChild(newChild)
+console.log('我的天啊');
+console.log();
+console.log();
+
+console.log();
+
+console.log('我的天啊');
+
+
+console.log('你在顽皮');
+
+'我的饿去你'.log
+console.log('dee ');
+饿哦
+console.log('');
+console.log('dee dewo ');
+console.log(i);
+console.log(的哦);
+
+console.log('');
+
+console.log('wode ');
+wo de ni zai wang shi pia 
+我的天
+
+for (let i = 0; i < array.length; i++) {
+    const element = array[i];
+    
+}
+for (let i = 0; i < array.length; i++) {
+    const element = array[i];
+    
+}
+
+for (let i  = 0; i  < array.length; i ++) {
+    const element = array[i ];
+    
+}
