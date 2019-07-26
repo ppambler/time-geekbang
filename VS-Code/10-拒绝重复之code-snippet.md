@@ -445,3 +445,20 @@ for (var i = 0; i < 5; i++) {
 
 搞完以上操作之后，别忘了 `S+A+u`同步一下哦！
 
+### ⑥json注释的问题？
+
+在github上预览时，json内容的注释都变红了。
+
+如果非要加注释请这样干：
+
+```json
+{
+  "_comment": "comment text goes here...",
+  "//": "comment text goes here..."
+}
+```
+
+以上两种二选一……
+
+**➹：**[如何看待json语法中不能加注释的设计? - 知乎](https://www.zhihu.com/question/23004511)
+
