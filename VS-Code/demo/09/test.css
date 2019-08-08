@@ -1,6 +1,11 @@
 #app {
-  display : flex;
-  background-color : #FFFFFF;
-  position : absolute;
-  color : #FFFFFF;
+  position: absolute;
+  display: flex;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  margin: 16px;
+  color: #fff;
+  background-color: #fff;
 }
