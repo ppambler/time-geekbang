@@ -111,7 +111,203 @@ function cpus() {
 
 可以看到注释写得非常好，可见这是一个非常专业的机构哈！
 
-代码虽然非常多，但我们只需要找到 `getCPUs` 就好了
+代码虽然非常多，但我们只需要找到 `getCPUs` 就好了，查找可知，它在一个 `Initialize` 初始化方法里边：
+
+``` C
+void Initialize() {
+  Environment* env = Environment::GetCurrent(context);
+  env->SetMethod(target, "getCPUs", GetCPUInfo);
+}
+```
+
+env执行一个 `SetMethod` 方法，然后传一个 `target` 进去，然后又定义了 `getCPUs` ，指向了 `GetCPUInfo` 这堆东西。
+
+``` C
+env->SetMethod(target, "getCPUs", GetCPUInfo);
+```
+
+说白了，上边这行代码，就是在定义c++模块的输出，而这个输出，它是使用了 v8 这个库处理之后，那么输出的这些东西，最终都会在 JS 里边直接被调用到！
+
+总之，这个文件的代码都是v8的一些能力，回顾头来看 `GetCPUInfo` 这个方法做了什么事情：
+
+``` C++
+static void GetCPUInfo(const FunctionCallbackInfo<Value>& args) { 
+   Environment* env = Environment:: GetCurrent(args); 
+   //……
+}
+
+``` 
+`FunctionCallbackInfo` 这个参数非常长，这是v8用来转换 JS 参数的一个对象，即我们 JS 调用这个方法所传的参数最终可以在 `args` 里边取到！
+
+当然，我们这个 `getCPUs` 方法其实是咩有任何参数的，所以这并不会涉及去参数的操作
+
+继续看下去，你会很直观的感受到最终都会通过 `uv_free_cpu_info(cpu_infos, count);` 去c++的一些底层代码里边获取到了我们的cpu信息。
+
+``` C
+args.GetReturnValue().Set(Array::New(isolate, result.data(), result.size()));
+```
+
+并且最后通过调用v8的接口 `GetReturnValue().Set()` , 然后把执行结果转变成了v8的变量，而这个v8变量最终又会变成我们的 JS 变量！最终实现了，c++到 JS 的变量转换。
+
+回到 `os.js` 这个外边来， `getCPUs()` 拿到了cpu信息 `data` ，并且把这个 `data` 再进行组装，最后返回到 Node.js 应用里边去哈！
+
+以上就是整个内置模块调用的一个通路啦！
+
+从我们的 Node.js 应用代码开始，调用到我们 Node.js 的底层库，然后这个内置模块又去调用 Node.js 里边的C++模块，c++模块又通过c++的一些调用，即调用我们的libuv，总之就是调用c++的一些底层函数，然后把得到的结果返回到我们 Node.js 的内置模块，然后再返回到  Node.js 应用代码。
+
+总之，这就是一个整个内置模块调用的通路，通过这种方式实现了 Node.js 和操作系统的一个交互。
+
+![1571024017403](img/04/1571024017403.png)
+
+> 通过binding，让 JS 有了与 C++ 沟通的能力，JS说「我想吃雪糕」，C++「帮你弄个雪糕出来」。突然觉得 JS 是一种很声明式编程的体现呀，即站在语言这个层面上， JS 告诉 C++ 我要什么，然后让C++ 去做.
+
+**➹：**[声明式编程和命令式编程有什么区别？ - 知乎](https://www.zhihu.com/question/22285830)
+
+目前，我们已经了解到了这样一个通路：
+
+application👉👉👉V8👉👉👉Node.js bindings👉👉👉V8👉👉👉application
+
+而这就是一个典型的 Node.js 内置模块的运行机制。
+
+那其实还有一种情况，即有一些数据它可能不是从 Node.js 开始调用的，比如说直接从操作系统底层通知到我们的 Node.js 代码去做一些事情
+
+那么这有啥例子可以体现出这一点呢？
+
+拿我们之前的石头剪刀布游戏来看:
+
+``` JS
+// index.js
+const game = require('./game')
+let count = 0
+process.stdin.on('data', e => {
+  const playerAction = e.toString().trim()
+  const result = game(playerAction)
+  if (result == -1) {
+    count++
+  }
+  if (count === 3) {
+    console.log('好吧！人类，既然我输了三局，那我认输。')
+    process.exit()
+  }
+})
+```
+
+当我们 `node index.js` 之后，我会在终端里边输入一些游戏操作，如「石头」、「剪刀」等，然后操作系统会帮我把终端里边接收到的这些信息传到我们的 Node.js 里边来，而在这个过程里边，就会用到另外一个内置模块，叫做 `EventEmitter` ，它是一个专门用来处理事件的模块！
+
+**➹：**[Events - Node.js v12.12.0 Documentation](https://nodejs.org/dist/latest-v12.x/docs/api/events.html#events_class_eventemitter)
+
+在文档里边，可以看到 `EventEmitter` 是属于 `Events` 这个模块里边的Class
+
+然后它有许多方法，其中有个方法 `emitter.addListener(eventName, listener)` ，我想大家都很熟悉吧 ！这跟前端里边的，写一些事件监听器，如鼠标点击 `btn.addEventListener('click',callback)` ……是非常相像
+的。
+
+总之， `EventEmitter` 实际上是一个同 `btn.addEventListener('click',callback)` 这样类似的东西，即它可以把底层发生的一些变化，如前端里边的页面接受了鼠标事件，传递到我们的前端上来，然后让你可以做相应的操作！
+
+那么 Node.js 其实也是一样的，它通过 `EventEmitter` 这个模块来做到， 它 的 `process` 全局变量也是 `EventEmitter` 的一个实例，即process其实是继承了EventEmitter的，然后 process就具备了往上抛事件的能力，而这个往上抛事件的能力，我们一般称之为「观察者模式」，就像我们刚才说到前端也有一个很经典的观察者模式，那就是 `addEventListener` 和 `removeEventListener` 这两个方法
+
+简单来说，「观察者模式」就是一个**事件的收发**的这么一个模式！
+
+那么什么时候会用到这种模式呢？——直接用代码来演示一下，即用观察者模式来写一些什么东西
+
+需求：极客时间如果有一个新的课程更新，就会通知到你，然后你就会去观看去学习
+
+``` JS
+// index.js
+// 把抛事件的模块封装起来
+// 强调抛事件这种模式更适合底层模块往外传递信息
+const geektime = require('./geektime');
+
+geektime.on('newlesson', ({
+  price
+}) => {
+  console.log('yeah! new lesson')
+  if (price < 80) {
+    console.log('buy')
+  }
+})
+
+setTimeout(() => {
+  // 需要注意的是，EventEmitter如果添加了过多的监听器，Node.js觉得你有内存泄漏嫌疑，会抛出一个warning。
+  // 用以下这句则可以消除这个限制
+  // geektime.setMaxListeners(200);
+  for (let i = 0; i < 100; i++) {
+    geektime.on('newlesson', ({
+      price
+    }) => {})
+  }
+}, 10000)
+```
+
+``` JS
+//geektime.js
+const EventEmitter = require('events').EventEmitter;
+
+class Geektime extends EventEmitter {
+  constructor() {
+    super();
+
+    setInterval(() => {
+      this.emit('newlesson', {
+        price: Math.random() * 100
+      })
+    }, 3000)
+  }
+}
+
+module.exports = new Geektime;
+```
+
+`Geektime` 这个Class就是一个最简单的事件收发器啦！
+
+> 用到 `this` ，必须写上 `super()` 。这里的 `this` 的指向就是 `Geektime` 实例哈！说白了， `geektime` 对象从 EventEmitter 哪里继承了 `on` 、 `emit` 等方法，而这让我们具备了可以自定义事件的能力！对了，可以直接这样 `const EventEmitter = require('events')` 
+
+测试：
+
+1. 创建一个 `Geektime` 实例 `geektime` 
+2. 为 `geektime` 实例添加事件监听器，即监听 `newlesson` 事件，如果有新课程上线，那就做点什么操作
+3. 事件监听器可以获取这个 `newlesson` 事件触发所抛出的内容
+
+收获什么：
+
+1. EventEmitter的实例（Geektime继承自EventEmitter，说Geektime的实例为EventEmitter的实例没有太大区别，因为这能力就是继承自ventEmitter的），它可以任意的抛任何数据出去，总之，该实例可以抛任意的事件出来，并且带着它想要给的一些参数，让外面统统可以接收到！回忆起之前所写的这个代码 `process.stdin.on('data',callback)` , 显然就很好理解了！
+
+以上就是 EventEmitter 的一个使用方法了，即用它来可以做一些通知的事情！
+
+为啥要把 `Geektime` 放到一个子模块里边，然后再导出一个 Geektime实例出来呢？
+
+这样做的意图是，因为我们想要把底层的一些逻辑封装起来放到另外一个模块里边，然后外边的业务代码（如 `index.js` 里边的代码）拿到这个模块，通过事件的监听器 `addListener` , 就能够比较方便的知道子模块里边发生的一些变化
+
+但是这种变化，并不需要我们的 `geektime` 对象去调用外边的一些函数，只需要往自己身上抛一个事件就可以了！即监听一个事件然后写上callback就好了。
+
+而这样一个做法，最大好处就是我们可以无限的去添加监听我们新课程的人数，然后我们的 `Geektime` 这个类并不需要做任何改变，而这个就是设计模式所要达成的一个目的，即我们扩展一些逻辑，完全不需要改动到底层，然后这样就可以提高我们程序的可维护性！
+
+回过头来，我们了解了 `EventEmitter` 是一个观察者模式的实践，而观察者模式是用来解决两个对象之间通信的问题的
+
+两个对象之间的通信，我们可以用直接的函数调用，也可以用观察者模式
+
+> 关于直接的函数调用是怎么理解的呢？
+>
+> `person.cut('jj')` 的意思是这样的：
+>
+> ①给 persom 对象发送了一个 cut 消息
+>
+> ②person 对象会响应这个消息
+>
+> 我们都说这是函数调用，其实 改成 Smalltalk 就理解了 ：
+>
+> `person cut: 'jj'` 、 `person cut: 'jj'; cut: 'hands'` 
+>
+> 而不是： `person.cut('jj')` 、 `person.cut('hands')` 
+
+那么什么时候应该用哪一种呢？
+
+现在网上很多的一些关于观察者模式的举例，都比较关注「通知」这件事情，他们觉得只要有「通知」这件事情就适合用观察者模式
+
+比如说老板，通知秘书去做一些事情，然后他们就会举例说用观察者模式来实现，但是这其实是不适合的
+
+因为观察者有一个不好的地方，那就是观察者模式「抛一个事件」，它其实是不知道被接收这通知的人是谁哈！
+
+如「老板通知秘书去做一些事情」用观察者模式来实现的话，那么老板只管抛这么一个事件，那么这个事件有可能不仅仅被秘书知道了，也有可能被门口保安知道了，如果涉及到商业机密，那么就是一个很大的问题了。
 
 ## ★总结
 
