@@ -123,10 +123,11 @@ function cpus() {
 
 ``` c++
 void Initialize() {
-  Environment* env = Environment::GetCurrent(context);
-  env->SetMethod(target, "getCPUs", GetCPUInfo);
+  Environment* env = Environment:: GetCurrent(context); 
+  env->SetMethod(target, "getCPUs", GetCPUInfo); 
 }
-```
+
+``` 
 
 env执行一个 `SetMethod` 方法，然后传一个 `target` 进去，然后又定义了 `getCPUs` ，指向了 `GetCPUInfo` 这堆东西。
 
@@ -144,7 +145,7 @@ static void GetCPUInfo(const FunctionCallbackInfo<Value>& args) {
    //……
 }
 
-```
+``` 
 
 `FunctionCallbackInfo` 这个参数非常长，这是v8用来转换 JS 参数的一个对象，即我们 JS 调用这个方法所传的参数最终可以在 `args` 里边取到！
 
@@ -533,7 +534,7 @@ using v8:: Object;
 using v8:: String; 
 using v8:: Value; 
 
-```
+``` 
 
 **libuv：**
 
@@ -545,4 +546,26 @@ args.GetReturnValue().Set(Array::New(isolate, result.data(), result.size()));
 ```
 
 **➹：**[深度理解nodejs[1]-node底层机制 - 郑建勋的个人网站](https://dreamerjonson.com/2018/11/08/%E6%B7%B1%E5%BA%A6%E7%90%86%E8%A7%A3nodejs/)
+
+### ⑧ 希望老师能出一个node的源码课。对内部逻辑清晰了很多 ？
+
+> 其实其他模块大致也是这个逻辑，有兴趣的话可以自发前往其他源码挖掘！自发学习会有更深刻的印象。
+>
+> 目前的计划可能后面只会在多进程那块再解析一下cluster模块的源码。 
+
+### ⑨那段测试代码？
+
+// class Geektime 的 constructor 每隔三秒会发布一个事件（this.emit('lesson'))，
+// 同时 Geektime 的实例 geektime 在 10 秒后创建了 100 个监听者监听 newlesson 事件（setTimeout 那段代码（geektime.on('newlesson')））。
+// 所以监听事件的对象就只能是发布事件对象的实例吗？
+
+> 是的，就像写前端的时候，一个dom对象一样
+
+额，难道这TM不是同一个对象吗？即发布事件的和监听事件的是同一个对象在搞事情啊！我们在写前端的时候，监听一个元素的click事件，用户点击这个元素，那么这个元素就会抛个click事件出来，然后就会处理为这个click事件所绑定的callback，当然如果没有callback，那就拉倒吧，即你看不见效果，即便你这个元素没有监听这个click事件也拉倒！反正click事件是有向上抛的！
+
+### ⑩cluster？
+
+cluster可不可以讲一些关于node进程守护这方面的东西，最近自己有在学习node稳定性，但是对node进程守护不是太明白，也看了一些pm2的原理，emmm.... 目前还是能力有限，自己简单实现还是无法做到。
+
+> 这部分在第五章
 
