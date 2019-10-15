@@ -78,7 +78,7 @@ application就是我们所写的 Node.js 代码，然后它通过V8引擎来运�
 
 cpus，它是个函数，但在文档上的表现它是一个方法，不过这并不重要，一个称呼而已。
 
-``` JS
+``` js
 function cpus() {
   // [] is a bugfix for a regression introduced in 51cea61
   const data = getCPUs() || [];
@@ -121,7 +121,7 @@ function cpus() {
 
 代码虽然非常多，但我们只需要找到 `getCPUs` 就好了，查找可知，它在一个 `Initialize` 初始化方法里边：
 
-``` C
+``` c++
 void Initialize() {
   Environment* env = Environment::GetCurrent(context);
   env->SetMethod(target, "getCPUs", GetCPUInfo);
@@ -130,7 +130,7 @@ void Initialize() {
 
 env执行一个 `SetMethod` 方法，然后传一个 `target` 进去，然后又定义了 `getCPUs` ，指向了 `GetCPUInfo` 这堆东西。
 
-``` C
+``` c++
 env->SetMethod(target, "getCPUs", GetCPUInfo);
 ```
 
@@ -138,13 +138,13 @@ env->SetMethod(target, "getCPUs", GetCPUInfo);
 
 总之，这个文件的代码都是v8的一些能力，回顾头来看 `GetCPUInfo` 这个方法做了什么事情：
 
-``` C++
+``` c++
 static void GetCPUInfo(const FunctionCallbackInfo<Value>& args) { 
    Environment* env = Environment:: GetCurrent(args); 
    //……
 }
 
-``` 
+```
 
 `FunctionCallbackInfo` 这个参数非常长，这是v8用来转换 JS 参数的一个对象，即我们 JS 调用这个方法所传的参数最终可以在 `args` 里边取到！
 
@@ -186,7 +186,7 @@ application👉👉👉V8👉👉👉Node.js bindings👉👉👉V8👉👉👉a
 
 拿我们之前的石头剪刀布游戏来看:
 
-``` JS
+``` js
 // index.js
 const game = require('./game')
 let count = 0
@@ -222,7 +222,7 @@ process.stdin.on('data', e => {
 
 需求：极客时间如果有一个新的课程更新，就会通知到你，然后你就会去观看去学习
 
-``` JS
+``` js
 // index.js
 // 把抛事件的模块封装起来
 // 强调抛事件这种模式更适合底层模块往外传递信息
@@ -249,7 +249,7 @@ setTimeout(() => {
 }, 10000)
 ```
 
-``` JS
+``` js
 //geektime.js
 const EventEmitter = require('events').EventEmitter;
 
@@ -533,7 +533,7 @@ using v8:: Object;
 using v8:: String; 
 using v8:: Value; 
 
-``` 
+```
 
 **libuv：**
 
