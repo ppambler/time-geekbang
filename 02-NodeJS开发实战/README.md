@@ -27,4 +27,5 @@
   + [模块： Node.js 内置模块](./02-技术预研篇/04-built-in-module.md)
   + [异步：非阻塞I/O](./02-技术预研篇/05-non-blocking-io.md)
   + [异步：异步编程之callback](./02-技术预研篇/06-callback.md)
+  + [异步：事件循环](./02-技术预研篇/07-event-loop.md)
 

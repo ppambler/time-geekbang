@@ -280,41 +280,41 @@ err => {
 
 * [Thunk 函数的含义和用法 - 阮一峰的网络日志](http://www.ruanyifeng.com/blog/2015/05/thunk.html)
 
-  * 参数的求值策略， **即函数的参数到底应该何时求值** 
+  + 参数的求值策略， **即函数的参数到底应该何时求值** 
 
-    * 传值调用， 在进入函数体之前，就计算传入的表达式值。如C、JS
-    * 传名调用，直接把表达式传进来， 只在用到它的时候求值（即只在执行时求值 ） 。如 Hskell 
+    - 传值调用， 在进入函数体之前，就计算传入的表达式值。如C、JS
+    - 传名调用，直接把表达式传进来， 只在用到它的时候求值（即只在执行时求值 ） 。如 Haskell 
 
     选择谁呢？——各有利弊呀！ 传值调用比较简单 ，但如果咩有用到这个参数，那就 有可能造成性能损失 
 
 * Thunk函数？—— **它是"传名调用"的一种实现策略，用来替换某个表达式** 
 
-```js
-function f(m){
-  return m * 2;     
+``` js
+function f(m) {
+  return m * 2;
 }
 
 f(x + 5);
 
 // 等同于
 
-var thunk = function () {
+var thunk = function() {
   return x + 5;
 };
 
-function f(thunk){
+function f(thunk) {
   return thunk() * 2;
 }
 ```
 
 这样子么？
 
-```js
-var thunk = function (x) {
+``` js
+var thunk = function(x) {
   return x + 5;
 };
 
-function f(x){
+function f(x) {
   return thunk(x) * 2;
 }
 
@@ -322,6 +322,12 @@ f(5)
 ```
 
 说白了，就是用函数的返回值替换成表达式？
+
+* 把一个个异步任务看做一个个非阻塞I/O，把一个个嵌套调用的函数看做是一个个在 Call Stack里边的元素！
+
+* 关于callback的异步流程控制会导致的两个问题：回调地狱(希望有顺序的调用callback)、异步的并发或者说是连续异步（咩有顺序之分，但有相同的callback处理流程，即有大量的代码重复）
+
+---
 
 ## ★Q&A
 
