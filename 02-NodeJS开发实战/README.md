@@ -28,4 +28,6 @@
   + [异步：非阻塞I/O](./02-技术预研篇/05-non-blocking-io.md)
   + [异步：异步编程之callback](./02-技术预研篇/06-callback.md)
   + [异步：事件循环](./02-技术预研篇/07-event-loop.md)
+  + [异步：异步编程之Promise](./02-技术预研篇/08-promise.md)
+  + [异步：异步编程之async/await](./02-技术预研篇/09-async-await.md)
 
