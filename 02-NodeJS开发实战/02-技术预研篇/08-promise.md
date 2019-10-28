@@ -271,6 +271,111 @@ promise.then((res) => {
 
 ![then的第一个callback是好的](img/08/2019-10-28-23-57-26.png)
 
+那么返回出去的Promise实例就是很正常的 `resolved`态，而且这个Promise实例的值，就是我们这个 `then` return 出去的值！
+
+总之， `.then`是会产生一个新的Promise实例的，而这个新的Promise实例的结果是会根据 `.then`里边的第一个callback的返回或者说抛出的错误来决定的！
+同理，`.catch`也是如此！
+
+测试（改成必然会面试失败，显然这非常的凄惨哈！）：
+
+![rejeced态的Promise实例](img/08/2019-10-29-00-16-47.png)
+
+可见，catch和then一样，都是会根据callback的执行结果来决定返回的Promise实例是什么状态！
+
+那么如何让 `promise2`为 rejected态呢？——很简单，抛个错误即可！
+
+``` JS
+var promise = interview()
+var promise2 = promise.then((res) => {
+  return 'accept'
+}).catch(err => {
+  throw new Error('refuse')
+})
+```
+
+总结一下：
+
+- 执行 then 和 catch 会返回一个新 Promise，该 Promise 最终状态根据 then 和catch 的回调函数的执行结果决
+  - 如果回调函数最终是 throw，该 Promise 是 rejected 状态
+  - 如果回调函数最终是 return，该 Promise 是 resolved 状态
+
+或许你会有这样的疑问：以上两点，即这两个功能，对我们解决异步的流程控制问题到底有啥帮助呢？
+
+其实对Promise的使用还有一个更强大的功能，了解了这个功能之后，你就会明白Promise确实可以帮助我们解决异步流程控制问题！
+
+测试：「如果在then或catch里直接显示返回一个新的Promise实例会咋样呢？而且在这个Promise实例里边也要执行一个异步任务」
+
+``` JS
+function interview() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (Math.random() > 0) {
+        resolve('success')
+      } else {
+        reject(new Error('fail'))
+      }
+    }, 500)
+  }
+  )
+}
+
+var promise = interview()
+var promise2 = promise.then((res) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve('accept')
+    }, 400)
+  })
+})
+
+setTimeout(() => {
+  console.log(promise)
+  console.log(promise2)
+}, 800)
+
+setTimeout(() => {
+  console.log(promise)
+  console.log(promise2)
+}, 1200)
+```
+
+结果：
+
+![then or catch里边返回的是一个Promise实例](img/08/2019-10-29-01-18-31.png)
+
+那么这说明了什么呢？
+
+说明了 `promise2`这个新Promise实例的状态是会跟这个显示声明的 `new Promise()`一起的！即 `promise2`会等待这个显示声明的 Promise 的执行结果结束之后，那么 `promise2`才会执行结束！
+
+而这个就是Promise链式调用的第三个知识点了：
+
+- 如果 then 和 catch 的回调函数最终 return 了一个 Promise ，那么该 Promise 会和回调函数 return 的 Promise 状态保持一致
+
+> new Promise会返回一个Promise实例，then同样也会返回一个Promise实例，是这样子么？还是说一个是显式的返回，一个是隐式的返回呢？——我觉得不是显式和隐式问题，因为在使用 `then`的时候，我们把 `return`的结果给返回出去了！说白了，之所以在 `then`里边 显式返回一个Promise实例，那是因为我们想追加一个异步任务，然后看看结果是否是好的！（有种异步任务同步执行的调调，即一个异步任务处理完之后，才轮到下一个新的异步任务……！不会出现类似多个定时器那样时间抵消的情况，即假如有2个定时器，一个400ms后执行，一个500ms后执行，首先400ms的执行了，再过100ms之后就会执行500ms那个定时器！而这对于Promise来说就可以实现，400m一次执行，然后再过500ms后一次执行，说白了就是重新计时呗！）
+
+![Promise与计时器](img/08/2019-10-29-01-50-42.png)
+
+以上这样一种机制，就决定了我们可以在Promise的链式调用里边串行的执行多个异步任务
+
+接下来，就来实际演示一下多轮面试这种情况，在Promise里边要怎么写？
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
