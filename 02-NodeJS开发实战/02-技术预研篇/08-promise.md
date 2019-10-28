@@ -1,5 +1,7 @@
 # 异步：异步编程之Promise
 
+## ★概述
+
 Promise是第二种异步编程方法！Promise和模块化规范一样，都出自于 CommonJS 规范，但是它最终被 JS 官方所采用，现在它已经成为了社区所最推荐的一种异步编程解决方案！因此，需要重点讲一下这个Promise！
 
 Promise是啥意思？
@@ -7,6 +9,8 @@ Promise是啥意思？
 就如它的字面单词意思一样，即「承诺」之意，它承诺你现在还得不到一个结果，但是在未来等到确定之后，就会给你一个结果，而这听起来就像是一个渣男所说的话一样！
 
 总之，Promise其实就是这样一个渣男！
+
+## ★Promise实例就是个状态机
 
 回到 Node.js ，Promise的意思就是说「在当前这个事件循环里边，它是一个没有确切结果的东西，但是在未来的一个事件循环里边，它会给到你结果！」
 
@@ -110,6 +114,170 @@ log结果：
 写代码验证一下这件事能否发生：
 
 > 测试：300ms之后，Promise 从pending态，扭转到了 resoveled态，然后在500ms之后，尝试把Promise 从 resoveled态 扭转到 rejected态，然后最终在800ms的时候再打印它的状态机！
+
+``` js
+(function () {
+  const promise = new Promise((resolve, reject) => {
+    console.log(1)
+    setTimeout(() => {
+      resolve()
+    }, 300)
+    setTimeout(() => {
+      console.log(5)
+      reject(new Error('hi'))
+      console.log(6)
+    }, 500)
+    console.log(2)
+  })
+  console.log(3)
+  console.log(promise)
+  setTimeout(() => {
+    console.log(promise)
+    console.log(7)
+  }, 800)
+  console.log(4)
+})()
+```
+结果：
+
+![resoveled态和rejected态之间不能相互扭转](img/08/2019-10-28-21-36-13.png)
+
+可见，Promise实例的状态，还是我们第一次扭转的那个状态！即第一次是resolved了，那么就是这个状态，而resoveled态和rejected态之间是不能互相转换的！
+
+我们知道Promise实例它是一个状态机，我们想检测它的状态，然后根据这个状态去做某些事情，而我们用定时器这种姿势去检测它的状态机有咩有变化显然是不可能的
+
+我们使用Promise来解决异步问题，是希望它在得到结果的同时，马上通知我们，所以这个代码该怎么写呢？
+
+> 这个时候Promise实例的两个方法就出场了，而这两个方法一个是`then`，一个是 `catch`
+
+## ★then和catch的用法
+
+`then`是啥意思？——拿代码来看：
+
+![then的一个参数](img/08/2019-10-28-22-16-25.png)
+
+说白了，then前边那个Promise实例进入了 resoveled态 ,那么then的第个函数参数就会被回调，并且把 resolve的结果给拿到！
+
+代码测试如下：
+
+``` js
+(function () {
+  const promise = new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(3)
+    }, 300)
+  }).then((res) => {
+    console.log(res)
+  }).catch(() => {
+
+  })
+  console.log(promise)
+  setTimeout(() => {
+    console.log(promise)
+  }, 800)
+})()
+```
+结果：
+
+![then的简单用法](img/08/2019-10-28-22-22-29.png)
+
+> 我测试了上边代码两个定时器同为300ms的情况，结果会先去执行then里边的callback，当然这或许是第一个定时器先被解析执行的！
+
+总之，Promise实例一旦有了结果，那么第一时间内就会交给then去处理（这涉及到宏任务和微任务，微任务的优先级更高）
+
+话又说回来，`catch`是干嘛的呢？——同 `then`的原理那样，但是它所接收的是前边的Promise实例是 rejected态，然后catch的函数参数才会被回调
+
+测试：
+
+![catch测试](img/08/2019-10-28-22-34-54.png)
+
+> 不管这个为啥会这样了，我只能说是Chrome的问题了
+
+从上边的结果，可以注意到，rejected态的Promise实例， 经过catch的处理之后，之前所产生的全局的 `Uncaught (in promise) Error`（醒目的红色字眼）打印就已经消失了，即当一个 Promise 实例 进入 rejected态，但是它又被后边的catch捕捉到之后，那么它这个错误就不会被抛到全局了。
+
+总结一下，then和catch的用法：
+
+- .then 和 .catch
+  - resolved 状态的 Promise 会回调后面的第一个 .then
+  - rejected 状态的 Promise 会回调后面的第一个 .catch
+  - 任何一个 rejected 状态且后面没有 .catch 的 Promise，都会造成 浏览器 /node 环境的全局错误
+
+> 关于catch这点的理解，它会忽略掉第一个then，然后把catch作为第一个类似的then的家伙来调用！同理，你先写catch然后再写then，如果是resolve态的Promise实例，也会先忽略掉catch，然后执行第一个出现的then
+> 全局错误，有可能造成浏览器或者node环境的崩溃！
+
+如果Promise只有执行异步任务，然后通过then或catch获取执行结果的功能的话，那么Promise其实跟callback那种处理异步流程姿势，也没啥区别！甚至要比callback的写法还要复杂一些！
+
+既然Promise出现了，那么它优秀的地方在哪儿呢？
+
+## ★Promise它优秀的地方
+
+Promise优秀的地方在于它可以解决很多异步流程控制的问题，之前在callback那节内容提到了，如果我们在面试多轮的情况，或者说需要同时获取多家公司面试结果的情况下，会遭遇到异步流程控制的问题
+
+那么接下来就看一下，Promise是如何帮我们解决这些问题的
+
+做法：
+
+1. `interview`函数返回的是一个Promise实例，而不是使用callback来搞
+2. 给Promise构造函数传入一个固定格式的函数参数，而且在这个函数参数的函数体里边执行异步任务，说白了就是在这个Promise里边执行异步任务啦！
+3. 如果说我面试成功了，那我就调用 resolve，并把成功的结果给返回出去，即这样`resolve('success')`传个参数
+4. 同理，面试失败了，那就调用 reject，然后把失败的结果给返回出去，即这样 `reject(new Error('fail'))`
+
+> 注意：resolve和 reject它们俩都只能接收一个参数
+
+``` js
+function interview() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (Math.random() > 0.2) {
+        resolve('success')
+      } else {
+        reject(new Error('fail'))
+      }
+    })
+  }
+  )
+}
+```
+
+至此，`interview`函数就被我们改造成一个返回Promise实例的函数了！
+
+测试这个 `interview`函数（由于不需要看到状态，因此可以在node环境下来测试）：
+
+``` js
+let promise = interview()
+
+promise.then((res) => {
+  console.log('smile')
+}).catch((err) => {
+  console.log('cry')
+})
+```
+
+以上就是一个最基础的Promise的使用方法了！
+
+至此，这个 `interview`函数已经成功的被我们改成了使用Promise 的方式来处理异步了，当然，Promise实际上还可以做一些更加牛逼的操作
+
+那么这是什么样的牛逼操作呢？
+
+举例来说：
+
+在我得知我面试的这家公司成功通过之后，我狠狠的拒绝了这家公司offer：
+
+![Promise实例状态切换](img/08/2019-10-28-23-44-39.png)
+
+> 我在定时器里边追加了一行 `console.log(promise === promise2)` ，结果是 `false`
+
+从上边的截图来看，`then`这个方法其实是会返回一个全新的Promise实例的，而这个 `promise2`的状态是会根据那个 `promise.then(callback)`里边的callback的执行结果来决定的！即如果该callback是throw了一个错误或者其它语法错误什么的，那返回的Promise实例，即这个 `promise2`就是 rejected态的，同样，我们可以推测，假如我们开开心心地接受了这个offer：
+
+![then的第一个callback是好的](img/08/2019-10-28-23-57-26.png)
+
+
+
+
+
+
+
+
 
 ## ★总结
 
