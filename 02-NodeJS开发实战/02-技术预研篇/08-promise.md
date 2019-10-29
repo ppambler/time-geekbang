@@ -692,6 +692,7 @@ var menu = {
 
 ### ②目前Promise实例是 resoveled态，那么该Promise实例能切换成 rejected态吗？
 
+不能，状态的切换要通过then这样的API构造出一个新的Promise实例才能切换！
 
 ### ③关于思考模型？
 

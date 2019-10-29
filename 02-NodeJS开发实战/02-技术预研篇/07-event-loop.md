@@ -224,3 +224,8 @@ try {
 
 * 一个新的认识，根据不同的异步API，evenntloop会把callback push 到其相应的队列里边去，如果某个异步任务有了结果，那么eventloop就会把执行使用该结果的callback交给V8引擎去处理！需要注意的是，eventloop每次通知V8去执行callback的前提是，当前的Call Stack得是空空如也哈！说白了，callback在没有得到异步任务处理的结果之前是处于冻结状态的，但有了结果之后，此时就处于活跃状态了，或者说是可执行状态了，但是这会立刻执行吗？——可能会也可能不会，这得看看eventloop是怎么处理的了，毕竟这世界不只有你一个callback存在，还有很多callback此时也是处于活跃状态的！
 
+* 偶遇了一张图：
+
+![event loop](assets/img/2019-10-29-13-23-22.png)
+
+**➹：**[Node.js / promise · Issue #80 · chochinlu/blog](https://github.com/chochinlu/blog/issues/80)
