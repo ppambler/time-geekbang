@@ -284,7 +284,7 @@ promise.then((res) => {
 
 那么如何让 `promise2`为 rejected态呢？——很简单，抛个错误即可！
 
-``` JS
+``` js
 var promise = interview()
 var promise2 = promise.then((res) => {
   return 'accept'
@@ -299,13 +299,15 @@ var promise2 = promise.then((res) => {
   - 如果回调函数最终是 throw，该 Promise 是 rejected 状态
   - 如果回调函数最终是 return，该 Promise 是 resolved 状态
 
+## ★then or catch显示地返回了一个Promise实例
+
 或许你会有这样的疑问：以上两点，即这两个功能，对我们解决异步的流程控制问题到底有啥帮助呢？
 
 其实对Promise的使用还有一个更强大的功能，了解了这个功能之后，你就会明白Promise确实可以帮助我们解决异步流程控制问题！
 
 测试：「如果在then或catch里直接显示返回一个新的Promise实例会咋样呢？而且在这个Promise实例里边也要执行一个异步任务」
 
-``` JS
+``` js
 function interview() {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -357,34 +359,134 @@ setTimeout(() => {
 
 以上这样一种机制，就决定了我们可以在Promise的链式调用里边串行的执行多个异步任务
 
+## ★回调地狱？异步并发？这通通不是问题
+
+### ◇在then里边return一个promise
+
 接下来，就来实际演示一下多轮面试这种情况，在Promise里边要怎么写？
 
+``` js
+// 加个round参数代表是第几轮面试
+function interview(round) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // 80%的几率通过这个面试
+      if (Math.random() > 0.2) {
+        resolve('success')
+      } else {
+        let error = new Error('fail')
+        error.round = round //通过error把这个轮次数给记下来，以此来知道我们是在第几轮失败的！
+        reject(error)
+      }
+    }, 500)
+  }
+  )
+}
 
+var promise = interview(1)
+  .then(() => {
+    // 在then里边返回了一个新的promise，那么后续的操作都会等这个promise状态扭转之后才会继续执行
+    return interview(2)
+  })
+  .then(() => {
+    return interview(3)
+  })
+  .then(() => {
+    // 三轮面试成功之后就开心的笑出来
+    console.log('smile')
+  })
+  .catch((err) => {
+    // 处理面试失败的情况，当我们的promise被reject的时候，就会忽略前边的then，然后跑到这第一个catch来执行！
+    console.log('cry at ' + err.round + ' round !')
+  })
 
+```
 
+> 别忘了then每次都是返回一个新的Promise实例的（设它为A），而且这可不是return的那个Promise实例（设它为B），而且B的状态即是A的状态，B的值即是A的值！（传给resolve或reject的那个参数值）
 
+可见，通过以上这种方式，把我们三轮面试这整个的过程的写法，给简化成了一个比较容易看懂的这么一段代码！而这也就是Promise 神奇的地方，通过then和catch，把我们之前所遭遇到的回调地狱，变成了一个比较线性的一段代码，而且看起来也比较舒服一点！而且需求也能完成起来！
 
+### ◇Promise.all([]).then(callback).catch(callback)
 
+还有一个异步流程控制的问题，那就是我们在callback那节所提到的「并发异步」的问题！
 
+需求是这样的：面试两家公司，然后这两家同时面试成功之后，我们再笑出来！
 
+做法：
 
+1. 改造一下我们interview函数，即把round形参改成为公司的名字，即name
+2. 并发控制处理：`Promise.all([])`，该API接受一个数组，然后可以把多个promise放在这个数组里边，而all的返回值还是promise，所以可以这样 `Promise.all().then(callback).catch(callback)`，当then触发了，那么意味着数组里边的元素，都完成了异步任务，但是如果数组里边只要有一个元素GG了，那就走到 `catch`这个callback了。
 
+代码如下：
 
+``` js
+function interview(name) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // 50%的几率通过这个面试
+      if (Math.random() > 0.5) {
+        resolve('success')
+      } else {
+        let error = new Error('fail')
+        error.name = name
+        reject(error)
+      }
+    }, 500)
+  }
+  )
+}
 
+Promise.all([
+  interview('geekbang'),
+  interview('tencent')
+]).then(() => {
+  console.log('smile')
+}).catch((err) => {
+  // 把失败的原因打出来！如是在xxx公司挂了
+  console.log('cry for ' + err.name)
+})
 
+```
 
+关于 `Promise.all()`的使用，需要注意的是：
 
+`Promise.all().then().catch()`这个catch它是接收第一个失败的Promise实例，也就说假设你的「tencent」和「geekbang」面试都挂了，那么这个catch方法里边能接收到的只是先挂的那一个，即先把拒绝通知给到你的那家公司！（先reject那个呗！）总之，在这个catch里边，你是不太能知道你的所有的面试结果是怎样子的，如果你想知道所有 的面试结果，那么你就需要手动去把数组里边的几个promise元素传下去，然后在catch里边处理一下，然后去获取它们具体的面试结果！但是Promise.all已经是一个非常不错的控制异步并发的方式了，通过Promise.all，你基本上已经可以完成大部分的并发控制的异步调用了！
 
+测试，如果你想知道两家公司的面试情况：
 
+``` js
+Promise.all([
+  interview('geekbang').catch(err => {
+    return err
+  }),
+  interview('tencent').catch(err => {
+    return err
+  })
+]).then((data) => {
+  console.log(data)
+  console.log('smile')
+}).catch((err) => {
+  console.log('cry for ' + err.name)
+})
+```
+通过以上代码，你就会知道是两家公司都挂了，还是任意一家公司挂了！（注：`Promise.all().then().catch()`里边的 `catch()`其实可以扔掉的！ ）
 
+**➹：**[Promise.all错误处理 - 知乎](https://zhuanlan.zhihu.com/p/25743960)
 
-
-
-
+下一节学习 `async/await`，啃下这节课，那么学习下一节真得是非常轻松！
 
 
 
 ## ★总结
+
+- catch的本质是then的第二个callback参数
+- Promise 实例是一个状态机
+- 把一个异步函数改造成Promise，很简单，只需要返回一个promise实例即可！需要注意的是，`new Promise((resolve,reject)=>{})`是固定形式，即你形参就是 `resolve`和 `reject`，你去看Promise的源码实现，就会知道resolve和reject都是一个函数的名字！
+- then or catch 都是会返回一个新的隐式Promise实例。
+- 要执行 `.then()` or `.catch()`，那么其前边的Promise实例得是发生了状态变化才会执行，即由 `pending`变为 `resolved` or `rejected`
+- `.then()` or `.catch()`的return值，如果不是一个Promise实例，那么该值就作为处理结果，传给下一个then or catch的callback。如果是一个Promise实例，那么该实例的处理结果就会交给then所返回的Promise实例，而且状态保持一致！
+- `resolve()` or `reject()` 只接收一个参数。
+- 在then or catch里边可以返回promise实例这种机制，解决了如「回调地狱、异步并发」这样的异步流程控制问题，前者做法是代码形式上的级联操作，做到了异步任务的串行执行，后者做法是利用 `Promise.all()`这个API。
 
 ## Q&A
 
