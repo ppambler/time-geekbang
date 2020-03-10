@@ -12,6 +12,10 @@
 
 ➹：[人人都能学会的编程入门课-极客时间](https://time.geekbang.org/column/intro/100043901)
 
+## ★代码
+
+➹：[ppambler/geektime-program-101: 人人都能学会的编程入门课](https://github.com/ppambler/geektime-program-101)
+
 ## ★目录
 
 - [draft](./draft.md)
